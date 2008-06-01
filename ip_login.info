@@ -1,0 +1,4 @@
+; $Id$
+name = IP Login
+description = Allows users to login automatically by an IP address specified in the profile field e.g 'profile_ip'
+dependencies = profile

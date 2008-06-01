@@ -1,0 +1,117 @@
+<?php
+/**
+* $Id$
+* Allow user login by IP Address
+*/
+
+/**
+ * Implementation of hook_init
+ */
+function ip_login_init(){
+  global $user;
+  //call ip login on init for any page, if not already processed
+  if(!$_SESSION['ip_login_complete'] && !$user->uid){
+    ip_login_login($_SERVER['REMOTE_ADDR']);
+  }
+}
+
+/**
+ * Implementation of hook_menu
+ */
+function ip_login_menu($may_cache){
+  if(!$may_cache){
+    $items[] = array('path' => 'admin/settings/iplogin',
+      'title' => t('IP Login Settings'),
+      'description' => t('configure IP login settings'),
+      'access' => user_access('administer site configuration'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('ip_login_admin_settings')
+    );
+  }
+  return $items;
+}
+
+function ip_login_admin_settings(){
+  
+  $result = db_query("SELECT DISTINCT name FROM {profile_fields}");
+  if(db_num_rows($result)){
+    while($field = db_fetch_object($result)){
+      $fields[$field->name] = $field->name;
+    }
+  }
+  $form['info'] = array(
+    '#type' => 'markup',
+    '#value' => 'This module allows users to login automatically by IP address. The IP address value stored in a user\'s profile, using the \'profile\' module, is used to authenticate and login that user when visiting from that address. Addresses like 203.123.456.789 and also ranges like 203.123.456.* are supported.'
+  );
+  $form['ip_login_profile_ip_field'] = array(
+    '#type' => 'select',
+    '#title' => t('Profile module IP address field'),
+    '#description' => t('Select the profile field containing the user IP address.'),
+    '#options' => $fields,
+    '#default_value' => variable_get('ip_login_profile_ip_field','profile_ip')
+  );
+  return system_settings_form($form);
+}
+
+
+/**
+ * Log user in by ip address and profile_ip profile field
+ * @param string $ip ip address
+ * @return void
+ */
+function ip_login_login($ip){
+
+  //get wildcard IP for fuzzy range matches e.g 203.123.456.*
+  $ip_range = ip_login_get_range($ip);
+  
+  //get profile field for ip address
+  $profile_field = variable_get('ip_login_profile_ip_field', 'profile_ip');
+  
+  //DB lookup uid with passed ip address or range
+  $result = db_fetch_object(
+    db_query("SELECT pv.uid, pv.value FROM {profile_values} pv
+             INNER JOIN {profile_fields} pf ON pv.fid = pf.fid
+             WHERE pf.name = '%s' AND (pv.value = '%s' OR pv.value = '%s')", $profile_field, $ip, $ip_range)
+  );
+  //if a uid is returned with the passed ip address...
+  if($result){
+    //if can load user from uid where user status is active
+    if ($account = user_load(array('uid' => $result->uid, 'status' => 1))) {
+      //login by assigning account to global $user object
+      global $user;
+      $user = $account; //this part logs the user in
+      $message = t('Welcome %name. You are now logged into %sitename.',
+                    array(
+                      '%name' => $user->name,
+                      '%sitename' => variable_get('site_name', 'this website')
+                    )
+                  );
+      //set welcome message
+      drupal_set_message($message);
+      $message = t('Session opened for %name.', array('%name' => $user->name));
+      //log login event message
+      watchdog('user', $message);
+      // Update the user table timestamp noting user has logged in.
+      db_query("UPDATE {users} SET login = %d WHERE uid = %d", time(), $user->uid);
+      //IMPORTANT: drupal call to regenerate session data for anon user to authenticated user
+      sess_regenerate();
+    }
+  }
+  //set processed session flag
+  $_SESSION['ip_login_complete'] = 1;
+}
+
+/*
+ * Return ip range from ip address
+ * @param string $ip ip address
+ * @return string $ip ip address with wildcard *
+ *
+*/
+function ip_login_get_range($ip){
+  if($ip){
+    $ip = explode('.', $ip); //explode ip to array
+    array_pop($ip); //remove last element
+    $ip = implode('.', $ip).'.*'; //convert to string and add .*
+  }
+  return $ip;
+}
