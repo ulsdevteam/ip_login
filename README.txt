@@ -1,4 +1,3 @@
-$Id$
 IP Login - Login to Drupal automatically via your IP address
 By David Thomas
 davidwhthomas@gmail.com

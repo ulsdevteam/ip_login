@@ -1,6 +1,5 @@
 <?php
 /**
-* $Id$
 * Allow user login by IP Address
 */
 
