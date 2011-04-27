@@ -1,11 +1,19 @@
 IP Login - Login to Drupal automatically via your IP address
-By David Thomas
-davidwhthomas@gmail.com
-May 2008
+By David Thomas - davidwhthomas@gmail.com
+and Jim Kirkpatrick - bad.octopus@gmail.com
+April 2011
 
 *** ABOUT ***
-This module allows users to login first automatically via their IP address, instead of using a username / password.
-The module uses the core 'Profile' module to lookup a user's IP address
+This module allows users to login first automatically via their IP address, wildcard or range, instead of using a username / password.
+The module uses the core 'Profile' module to lookup a user's IP address - FOR NOW!
+
+*** NOTE April 2011 ***
+This version is an early preview of the 2.x-DEV branch and will soon loose the reliance on the core Profile module and gain
+better integration with other modules and Drupal 7.
+
+All information below is out of date but still relevant.
+
+
 
 *** HOW IT WORKS ***
 When a user visits any Drupal page, IP Login checks that they're not logged in and that IP login hasn't run yet for this session.
