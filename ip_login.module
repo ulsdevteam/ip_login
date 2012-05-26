@@ -401,7 +401,6 @@ function ip_login_match_user($ip, $diagnostics = FALSE){
   ->condition('field_ip_login_start', ip2long($ip), '<=')
   ->condition('field_ip_login_end', ip2long($ip), '>=')
   ->execute()->fetchField();
-  drupal_set_message('IP '.$ip.' UID match: '.$matching_uid);
   return $matching_uid;
 }
 
