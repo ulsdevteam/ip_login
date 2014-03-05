@@ -469,7 +469,7 @@ function ip_login_login($uid) {
       $url = variable_get('ip_login_destination', '');
       if (strlen($url) == 0) $url = str_replace(array("\n", "\r"), '', $_GET["q"]);
       if ($url == 'logout') $url = '<front>';
-      $url = url($url, array('query' => array('ip_login_no_cache=' . md5(time())), 'absolute' => TRUE));
+      $url = url($url, array('query' => array('ip_login_no_cache' => drupal_random_bytes(8)), 'absolute' => TRUE));
       // Before the redirect, allow modules to react to the end of the page request.
       module_invoke_all('exit', $url);
 
