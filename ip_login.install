@@ -14,20 +14,24 @@ function ip_login_install() {
       '@link' => 'admin/config/people/ip_login'
     )
   ));
-  
+
+  // Clear field info cache in case field_ipaddress
+  // is being installed at the same time
+  field_info_cache_clear();
+
   // Install field_ip_login
   // Check if our field is not already created.
-  if (!field_info_field('field_ip_login')) {
+  if (!field_info_field('field_ip_login') && module_exists('field_ipaddress')) {
     $field = array(
-      'field_name' => 'field_ip_login', 
+      'field_name' => 'field_ip_login',
       'type' => 'field_ipaddress',
       'cardinality' => FIELD_CARDINALITY_UNLIMITED
     );
     field_create_field($field);
-  
+
     // Create the instance on the bundle.
     $instance = array(
-        'field_name' => 'field_ip_login', 
+        'field_name' => 'field_ip_login',
         'entity_type' => 'user',
         'bundle' => 'user',
         'label' => 'IP address',
@@ -38,11 +42,14 @@ function ip_login_install() {
         ),
         'widget' => array(
             'type' => 'field_ipaddress_shorthand',
-        ), 
+        ),
     );
     field_create_instance($instance);
+  }else{
+    drupal_set_message(t('A problem occurred when creating the default field_ip_login: field_ipaddress field type not available.
+                         Please create field_ip_login manually on the user account, type: field_ipaddress.'), 'warning');
   }
-  
+
   variable_set('ip_login_enabled', 1);
 }
 
@@ -51,13 +58,13 @@ function ip_login_install() {
  * Migrate data from ip_login_user to new field
  */
 function ip_login_update_7300(&$sandbox){
- 
+
   if (!module_exists('field_ipaddress')){
     throw new DrupalUpdateException(t('IP Login 7.3.x requires the module field_ipaddress to be enabled.',
                          array('field_ipaddress' => l('field_ip_address', 'http://drupal.org/project/field_ipaddress', array('external' => TRUE)))));
     return;
   }
- 
+
   // Create the IP Address field
   // field_ip_login
   // on the User entity
@@ -65,15 +72,15 @@ function ip_login_update_7300(&$sandbox){
     // Check if our field is not already created.
     if (!field_info_field('field_ip_login')) {
       $field = array(
-        'field_name' => 'field_ip_login', 
+        'field_name' => 'field_ip_login',
         'type' => 'field_ipaddress',
         'cardinality' => FIELD_CARDINALITY_UNLIMITED
       );
       field_create_field($field);
-    
+
       // Create the instance on the bundle.
       $instance = array(
-          'field_name' => 'field_ip_login', 
+          'field_name' => 'field_ip_login',
           'entity_type' => 'user',
           'bundle' => 'user',
           'label' => 'IP address',
@@ -84,13 +91,13 @@ function ip_login_update_7300(&$sandbox){
           ),
           'widget' => array(
               'type' => 'field_ipaddress_shorthand',
-          ), 
+          ),
       );
       field_create_instance($instance);
       $sandbox['field_created'] = TRUE;
     }
   }
- 
+
   // Migrate the data
   // from ip_login_user
   // to field_ip_login data tables
@@ -107,7 +114,7 @@ function ip_login_update_7300(&$sandbox){
       ->range(0, 10)
       ->orderBy('u.uid', 'ASC')
       ->execute();
-  
+
     foreach ($result as $row) {
       $sandbox['current_uid'] = $row->uid;
       $sandbox['progress']++;
