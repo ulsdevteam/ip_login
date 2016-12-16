@@ -11,7 +11,7 @@ function ip_login_install() {
   drupal_set_message(
     st('IP Login settings are available under <a href="@link">Administer > Configuration > People > IP Login settings</a>.',
     array(
-      '@link' => 'admin/config/people/ip_login'
+      '@link' => url('admin/config/people/ip_login')
     )
   ));
 
