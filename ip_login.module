@@ -180,12 +180,12 @@ function ip_login_boot() {
     if (is_null($can_login_as_another_user)) {
       // first time login for user, so log in automatically.
       ip_login_login($matched_uid);
-      drupal_goto(ltrim(request_uri(), '/'));
+      ip_login_redirect();
     }
     elseif ($can_login_as_another_user == FALSE) {
       // user logged out, but is not allowed to use another user, so log in again.
       ip_login_login($matched_uid);
-      drupal_goto(ltrim(request_uri(), '/'));
+      ip_login_redirect();
     }
     elseif ($can_login_as_another_user == TRUE) {
       // user logged out, and is allowed to login as another user,
@@ -194,9 +194,20 @@ function ip_login_boot() {
     else {
       // do automatic login.
       ip_login_login($matched_uid);
-      drupal_goto(ltrim(request_uri(), '/'));
+      ip_login_redirect();
     }
   }
+}
+
+/**
+ * Redirect to request_uri().
+ */
+function ip_login_redirect() {
+  $destination = drupal_parse_url(request_uri());
+  $path = request_path();
+  $options['query'] = $destination['query'];
+  $options['fragment'] = $destination['fragment'];
+  drupal_goto($path, $options);
 }
 
 /**
